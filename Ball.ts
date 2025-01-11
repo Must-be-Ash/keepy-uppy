@@ -11,6 +11,8 @@ export class Ball {
   private lastHitTime: number = 0
   private readonly COMBO_TIMEOUT = 2000 // 2 seconds to maintain combo
   private lastHitType: 'none' | 'wall' | 'shoe' = 'none'
+  private boundaryWidth: number = 800
+  private boundaryHeight: number = 600
 
   constructor(x: number, y: number, radius: number) {
     this.x = x
@@ -41,6 +43,11 @@ export class Ball {
     this.lastHitTime = now
   }
 
+  updateBounds(width: number, height: number) {
+    this.boundaryWidth = width
+    this.boundaryHeight = height
+  }
+
   update() {
     this.x += this.vx
     this.y += this.vy
@@ -58,14 +65,14 @@ export class Ball {
       this.resetCombo()
     }
 
-    // Wall collisions
-    if (this.x - this.radius < 0 || this.x + this.radius > 800 || this.y - this.radius < 0) {
+    // Wall collisions with dynamic boundaries
+    if (this.x - this.radius < 0 || this.x + this.radius > this.boundaryWidth || this.y - this.radius < 0) {
       // Handle wall collision
       if (this.x - this.radius < 0) {
         this.x = this.radius
         this.vx = -this.vx * 0.8
-      } else if (this.x + this.radius > 800) {
-        this.x = 800 - this.radius
+      } else if (this.x + this.radius > this.boundaryWidth) {
+        this.x = this.boundaryWidth - this.radius
         this.vx = -this.vx * 0.8
       }
       
@@ -113,6 +120,7 @@ export class Ball {
     this.vy = -5
     this.comboCount = 0
     this.lastHitTime = 0
+    this.lastHitType = 'none'
   }
 }
 
