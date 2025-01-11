@@ -51,9 +51,9 @@ export class Ball {
   update() {
     this.x += this.vx
     this.y += this.vy
-    this.vy += 0.8 // Much stronger gravity
+    this.vy += 0.17 // Reduced from 0.2 for slightly lighter feel
 
-    // Less drag to maintain momentum
+    // Keep moderate air resistance
     this.vx *= 0.99
     this.vy *= 0.99
 
@@ -70,15 +70,15 @@ export class Ball {
       // Handle wall collision
       if (this.x - this.radius < 0) {
         this.x = this.radius
-        this.vx = -this.vx * 0.7 // More energy loss for heavier feel
+        this.vx = -this.vx * 0.7 // Increased from 0.65 for more bounce
       } else if (this.x + this.radius > this.boundaryWidth) {
         this.x = this.boundaryWidth - this.radius
-        this.vx = -this.vx * 0.7 // More energy loss for heavier feel
+        this.vx = -this.vx * 0.7 // Increased from 0.65 for more bounce
       }
       
       if (this.y - this.radius < 0) {
         this.y = this.radius
-        this.vy = -this.vy * 0.5 // Much more energy loss on ceiling for weight
+        this.vy = -this.vy * 0.8 // Increased from 0.75 for more bounce
       }
 
       // Check if this wall hit is part of the valid sequence
@@ -116,8 +116,8 @@ export class Ball {
   reset(x: number, y: number) {
     this.x = x
     this.y = y
-    this.vx = Math.random() * 8 - 4 // More horizontal movement
-    this.vy = -12 // Stronger initial upward velocity
+    this.vx = Math.random() * 1.5 - 0.75
+    this.vy = -3.5 // Keep the same initial height
     this.comboCount = 0
     this.lastHitTime = 0
     this.lastHitType = 'none'
