@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { Ball } from '../Ball'
 import { Cursor } from '../Cursor'
+import { ScoreEffect } from '../ScoreEffect'
 
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 600
@@ -17,6 +18,7 @@ export default function Game() {
 
   // Remove cursorVelocityRef since it's not being used
   const lastCursorPosRef = useRef({ x: 0, y: 0 })
+  const scoreEffectsRef = useRef<ScoreEffect[]>([])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -41,7 +43,33 @@ export default function Game() {
     const render = () => {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 
-      ball.update()
+      const collisionPoint = ball.update()
+      if (collisionPoint) {
+        const margin = 30
+        const x = collisionPoint.x === 0 ? margin : 
+                 collisionPoint.x === CANVAS_WIDTH ? CANVAS_WIDTH - margin : 
+                 collisionPoint.x
+        const y = collisionPoint.y === 0 ? margin : collisionPoint.y
+
+        scoreEffectsRef.current.push(
+          new ScoreEffect(
+            x, 
+            y, 
+            `+${collisionPoint.points}`, // Just show the points
+            collisionPoint.points > 5 ? "#ff4d4d" : "#22c55e"
+          )
+        )
+        setScore(prevScore => prevScore + collisionPoint.points)
+      }
+
+      // Update and draw score effects
+      scoreEffectsRef.current = scoreEffectsRef.current.filter(effect => {
+        const isAlive = effect.update()
+        if (isAlive) {
+          effect.draw(ctx)
+        }
+        return isAlive
+      })
 
       // Collision detection
       const dx = cursor.x - ball.x
@@ -69,10 +97,12 @@ export default function Game() {
         ball.vx = -Math.cos(randomAngle) * newSpeed + cursorVx * 0.5 // Reduced velocity influence
         ball.vy = -Math.sin(randomAngle) * newSpeed + cursorVy * 0.5 - verticalBoost // Reduced velocity influence
 
+        // Handle shoe hit sequence
+        ball.hitWithShoe()
+        setScore(prevScore => prevScore + 1)
+
         // Prevent multiple collisions
         ball.y = cursor.y - cursor.radius - ball.radius
-
-        setScore(prevScore => prevScore + 1)
       }
 
       // Update last cursor position
