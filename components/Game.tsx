@@ -13,8 +13,6 @@ export default function Game() {
   const [highScore, setHighScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
-
-  // Remove cursorVelocityRef since it's not being used
   const lastCursorPosRef = useRef({ x: 0, y: 0 })
   const scoreEffectsRef = useRef<ScoreEffect[]>([])
 
@@ -55,20 +53,20 @@ export default function Game() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Initialize game objects with current dimensions
+    // Initialize game objects
     if (!ballRef.current) {
       ballRef.current = new Ball(dimensions.width / 2, dimensions.height / 2, 
-        Math.min(dimensions.width, dimensions.height) * 0.033) // Responsive ball size
+        Math.min(dimensions.width, dimensions.height) * 0.033)
     }
     if (!cursorRef.current) {
       cursorRef.current = new Cursor(dimensions.width / 2, dimensions.height / 2, 
-        Math.min(dimensions.width, dimensions.height) * 0.067) // Responsive cursor size
+        Math.min(dimensions.width, dimensions.height) * 0.067)
     }
 
     const ball = ballRef.current
     const cursor = cursorRef.current
 
-    // Handle both mouse and touch events
+    // Handle mouse and touch events
     const handlePointerMove = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect()
       cursor.x = clientX - rect.left
@@ -86,7 +84,7 @@ export default function Game() {
       handlePointerMove(touch.clientX, touch.clientY)
     }
 
-    // Add touch event listeners
+    // Add event listeners
     canvas.addEventListener('mousemove', handleMouseMove)
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
     canvas.addEventListener('touchstart', handleTouchMove, { passive: false })
@@ -96,9 +94,10 @@ export default function Game() {
     const render = () => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height)
 
-      // Update ball with current dimensions
       ball.updateBounds(dimensions.width, dimensions.height)
       const collisionPoint = ball.update()
+      
+      // Handle score effects
       if (collisionPoint) {
         const margin = 30
         const x = collisionPoint.x === 0 ? margin : 
@@ -108,9 +107,8 @@ export default function Game() {
 
         scoreEffectsRef.current.push(
           new ScoreEffect(
-            x, 
-            y, 
-            `+${collisionPoint.points}`, // Just show the points
+            x, y,
+            `+${collisionPoint.points}`,
             collisionPoint.points > 5 ? "#ff4d4d" : "#22c55e"
           )
         )
@@ -138,19 +136,18 @@ export default function Game() {
         
         // Calculate base velocity from hit angle
         const angle = Math.atan2(dy, dx)
-        const baseSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy)
-        const newSpeed = Math.max(baseSpeed, 8)
-
-        // Add cursor velocity to the bounce, with less emphasis on upward movement
-        const cursorSpeed = Math.sqrt(cursorVx * cursorVx + cursorVy * cursorVy)
-        const kickBoost = Math.min(cursorSpeed * 0.3, 10) // Reduced multiplier and cap
         
-        // Less vertical boost for upward cursor movement
-        const verticalBoost = cursorVy < 0 ? kickBoost * 1.2 : kickBoost // Reduced multiplier
+        // Base bounce speed plus cursor speed influence
+        const cursorSpeed = Math.sqrt(cursorVx * cursorVx + cursorVy * cursorVy)
+        const bounceSpeed = 8 + Math.min(cursorSpeed * 0.3, 4)
 
-        const randomAngle = angle + (Math.random() - 0.5) * 0.3
-        ball.vx = -Math.cos(randomAngle) * newSpeed + cursorVx * 0.5 // Reduced velocity influence
-        ball.vy = -Math.sin(randomAngle) * newSpeed + cursorVy * 0.5 - verticalBoost // Reduced velocity influence
+        // Add a slight upward bias to the bounce, influenced by cursor direction
+        const upwardBias = cursorVy < 0 ? 0.3 : 0.1
+        const bounceAngle = angle + Math.PI + upwardBias
+
+        // Set velocities with consistent base + cursor influence
+        ball.vx = Math.cos(bounceAngle) * bounceSpeed + cursorVx * 0.3
+        ball.vy = Math.sin(bounceAngle) * bounceSpeed + cursorVy * 0.3
 
         // Handle shoe hit sequence
         ball.hitWithShoe()
@@ -163,7 +160,7 @@ export default function Game() {
       // Update last cursor position
       lastCursorPosRef.current = { x: cursor.x, y: cursor.y }
 
-      // Update game over condition with current height
+      // Game over check
       if (ball.y - ball.radius > dimensions.height) {
         setGameOver(true)
         ball.reset(dimensions.width / 2, dimensions.height / 2)
@@ -176,15 +173,17 @@ export default function Game() {
       animationFrameId = requestAnimationFrame(render)
     }
 
+    // Start the animation
     render()
 
+    // Cleanup
     return () => {
       cancelAnimationFrame(animationFrameId)
       canvas.removeEventListener('mousemove', handleMouseMove)
       canvas.removeEventListener('touchmove', handleTouchMove)
       canvas.removeEventListener('touchstart', handleTouchMove)
     }
-  }, [dimensions]) // Add dimensions to dependencies
+  }, [dimensions])
 
   // Handle high score updates separately
   useEffect(() => {
