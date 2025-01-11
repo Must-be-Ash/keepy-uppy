@@ -18,8 +18,8 @@ export class Ball {
     this.x = x
     this.y = y
     this.radius = radius
-    this.vx = Math.random() * 4 - 2 // Random initial horizontal velocity
-    this.vy = -5 // Initial upward velocity
+    this.vx = Math.random() * 4 - 2
+    this.vy = -5
   }
 
   resetCombo() {
@@ -51,9 +51,9 @@ export class Ball {
   update() {
     this.x += this.vx
     this.y += this.vy
-    this.vy += 0.2 // gravity
+    this.vy += 0.8 // Much stronger gravity
 
-    // Add drag to make movement more natural
+    // Less drag to maintain momentum
     this.vx *= 0.99
     this.vy *= 0.99
 
@@ -70,15 +70,15 @@ export class Ball {
       // Handle wall collision
       if (this.x - this.radius < 0) {
         this.x = this.radius
-        this.vx = -this.vx * 0.8
+        this.vx = -this.vx * 0.7 // More energy loss for heavier feel
       } else if (this.x + this.radius > this.boundaryWidth) {
         this.x = this.boundaryWidth - this.radius
-        this.vx = -this.vx * 0.8
+        this.vx = -this.vx * 0.7 // More energy loss for heavier feel
       }
       
       if (this.y - this.radius < 0) {
         this.y = this.radius
-        this.vy = -this.vy * 0.8
+        this.vy = -this.vy * 0.5 // Much more energy loss on ceiling for weight
       }
 
       // Check if this wall hit is part of the valid sequence
@@ -116,8 +116,8 @@ export class Ball {
   reset(x: number, y: number) {
     this.x = x
     this.y = y
-    this.vx = Math.random() * 4 - 2
-    this.vy = -5
+    this.vx = Math.random() * 8 - 4 // More horizontal movement
+    this.vy = -12 // Stronger initial upward velocity
     this.comboCount = 0
     this.lastHitTime = 0
     this.lastHitType = 'none'
